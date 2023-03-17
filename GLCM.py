@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from skimage.feature import graycomatrix, graycoprops
-from skimage import io
+from skimage.feature import graycomatrix, graycoprops, local_binary_pattern, hog
+from skimage import io, color
 
 # Veri kümesini yükleme
 class1 = io.imread_collection('GLCM/images/e0/*.tif')
@@ -28,9 +28,17 @@ def extract_features(image):
     energy = graycoprops(glcm, 'energy').ravel()
     correlation = graycoprops(glcm, 'correlation').ravel()
     asm = graycoprops(glcm, 'ASM').ravel()
+    mean = np.mean(glcm).ravel()
+
+    # LBP özelliğinin hesaplanması
+    lbp = local_binary_pattern(image, P=8, R=1)
+    n_bins = int(lbp.max() + 1)
+    hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, n_bins))
+
+    lbp_hist = hist.ravel()
 
     # Tüm özelliklerin birleştirilmesi
-    features = np.hstack([contrast, dissimilarity, homogeneity, energy, correlation, asm])
+    features = np.hstack([contrast, dissimilarity, homogeneity, energy, correlation, asm, mean, lbp_hist])
 
     return features
 
